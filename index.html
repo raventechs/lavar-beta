@@ -725,7 +725,7 @@ async function doLoginGoogle() {
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
     await auth.signInWithPopup(provider);
-    // onAuthStateChanged se dispara solo con el nuevo usuario
+    window.location.reload();
   } catch(e) { showToast('Error al iniciar sesión: ' + e.message, 'danger'); }
 }
 

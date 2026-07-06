@@ -614,7 +614,9 @@ window.addEventListener('DOMContentLoaded', () => {
   buildCarScene('loadingCar', 1.2);
 
   // Capturar resultado del redirect de Google
-  auth.getRedirectResult().catch(e => {
+  auth.getRedirectResult().then(result => {
+    // El onAuthStateChanged se encarga — no hace falta hacer nada acá
+  }).catch(e => {
     if (e.code && e.code !== 'auth/no-auth-event') {
       showToast('Error Google: ' + e.message, 'danger');
     }

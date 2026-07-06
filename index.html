@@ -723,7 +723,13 @@ async function doLogin() {
 async function doLoginGoogle() {
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithPopup(provider);
+    const result = await auth.signInWithPopup(provider);
+    if (result.user && !authInitialized) {
+      authInitialized = true;
+      currentUser = result.user;
+      currentRole = 'owner';
+      await initDueno();
+    }
   } catch(e) { showToast('Error al iniciar sesión: ' + e.message, 'danger'); }
 }
 

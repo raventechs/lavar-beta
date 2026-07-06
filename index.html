@@ -616,7 +616,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
   auth.onAuthStateChanged(async (user) => {
-    if (authInitialized) return;
+    // Solo ignorar si ya está la UI montada (evitar doble init)
+    if (authInitialized && document.getElementById('appShell').classList.contains('active')) return;
     authInitialized = true;
 
     const params = new URLSearchParams(window.location.search);
@@ -723,13 +724,8 @@ async function doLogin() {
 async function doLoginGoogle() {
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    const result = await auth.signInWithPopup(provider);
-    if (result.user && !authInitialized) {
-      authInitialized = true;
-      currentUser = result.user;
-      currentRole = 'owner';
-      await initDueno();
-    }
+    await auth.signInWithPopup(provider);
+    // onAuthStateChanged se dispara solo con el nuevo usuario
   } catch(e) { showToast('Error al iniciar sesión: ' + e.message, 'danger'); }
 }
 

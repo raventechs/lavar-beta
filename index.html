@@ -1216,10 +1216,16 @@ async function guardarAdmin() {
 // =============================================
 //  HELPERS UI
 // =============================================
-function showLogin() { document.getElementById('loginScreen').classList.add('active'); }
+function showLogin() {
+  const s = document.getElementById('loadingScreen');
+  s.style.display = 'none';
+  document.getElementById('loginScreen').classList.add('active');
+  window.scrollTo(0, 0);
+}
 function hideLoading() {
   const s = document.getElementById('loadingScreen');
-  s.classList.add('hidden'); setTimeout(() => s.style.display='none', 450);
+  s.classList.add('hidden');
+  s.style.display = 'none';
 }
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }

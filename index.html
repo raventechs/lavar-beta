@@ -1217,8 +1217,9 @@ async function guardarAdmin() {
 //  HELPERS UI
 // =============================================
 function showLogin() {
-  const s = document.getElementById('loadingScreen');
-  s.style.display = 'none';
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('appShell').classList.remove('active');
+  document.getElementById('appShell').style.display = 'none';
   document.getElementById('loginScreen').classList.add('active');
   window.scrollTo(0, 0);
 }

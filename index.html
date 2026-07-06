@@ -613,14 +613,7 @@ let authInitialized = false;
 window.addEventListener('DOMContentLoaded', () => {
   buildCarScene('loadingCar', 1.2);
 
-  // Capturar resultado del redirect de Google
-  auth.getRedirectResult().then(result => {
-    // El onAuthStateChanged se encarga — no hace falta hacer nada acá
-  }).catch(e => {
-    if (e.code && e.code !== 'auth/no-auth-event') {
-      showToast('Error Google: ' + e.message, 'danger');
-    }
-  });
+
 
   auth.onAuthStateChanged(async (user) => {
     if (authInitialized) return;
@@ -730,8 +723,8 @@ async function doLogin() {
 async function doLoginGoogle() {
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithRedirect(provider);
-  } catch(e) { showToast('Error Google: ' + e.message, 'danger'); }
+    await auth.signInWithPopup(provider);
+  } catch(e) { showToast('Error al iniciar sesión: ' + e.message, 'danger'); }
 }
 
 async function showRegister() {

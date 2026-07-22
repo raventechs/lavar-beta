@@ -455,12 +455,6 @@ input, select, textarea { border-radius: 10px !important; }
       </div>
 
       <div class="card">
-        <div class="card-title">📲 Acceso Punto de Venta</div>
-        <p style="font-size:13px;color:var(--text2);margin-bottom:8px;">Compartí este link con tu cajero o empleado.</p>
-        <div id="linkCajeroDisplay" style="font-size:11px;color:var(--naranja,#f59e0b);word-break:break-all;padding:8px;background:rgba(0,0,0,.2);border-radius:8px;margin-bottom:8px">—</div>
-        <button class="btn btn-primary btn-sm" id="compartirLinkCajeroBtn" style="width:100%">📤 Compartir por WhatsApp</button>
-      </div>
-      <div class="card">
         <div class="card-title">👤 Mi cuenta</div>
         <p style="font-size:13px;color:var(--text2);margin-bottom:12px;" id="cfgEmail">—</p>
         <button class="btn btn-danger btn-sm" onclick="doLogout()">Cerrar sesión</button>
@@ -471,16 +465,6 @@ input, select, textarea { border-radius: 10px !important; }
 </div>
 
 <!-- MODAL SUCURSAL -->
-<!-- Modal PIN Cajero -->
-<div class="modal-overlay" id="modalPinCajero" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center">
-  <div style="background:var(--surface,#1e293b);border-radius:16px;padding:28px 24px;width:90%;max-width:300px;text-align:center">
-    <div style="font-size:1rem;font-weight:700;margin-bottom:16px">🔐 PIN Punto de Venta</div>
-    <input type="password" id="pinCajeroInput" maxlength="6" inputmode="numeric" placeholder="••••" style="width:100%;padding:12px;border-radius:10px;border:1px solid #374151;background:#111827;color:#f1f5f9;font-size:1.1rem;text-align:center;margin-bottom:8px">
-    <div id="pinCajeroError" style="color:#ef4444;font-size:0.75rem;min-height:18px;margin-bottom:8px"></div>
-    <button id="pinCajeroConfirmBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">Entrar</button>
-  </div>
-</div>
-
 <div class="modal-overlay" id="modalSucursal">
   <div class="modal">
     <h3>🏪 Nueva sucursal</h3>
@@ -658,37 +642,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-  // ── ARQUITECTURA CAJERO (estándar RavenTechs) ────────
-  const _codigoCajero = new URLSearchParams(window.location.search).get('cajero');
-
-  async function iniciarComoCajero(codigo) {
-    try {
-      const snap = await db.collection('accesos').doc(codigo).get();
-      if (!snap.exists) {
-        document.getElementById('loadingScreen').classList.add('hide');
-        document.getElementById('loginScreen').classList.add('active');
-        alert('Código de acceso inválido. Pedile un link nuevo al dueño.');
-        return;
-      }
-      const acceso = snap.data();
-      uidDueno = acceso.uidDueno;
-      pinCajeroActual = acceso.pin || '2468';
-      document.getElementById('loadingScreen').classList.add('hide');
-      document.getElementById('pinCajeroInput').value = '';
-      document.getElementById('pinCajeroError').textContent = '';
-      document.getElementById('modalPinCajero').style.display = 'flex';
-      setTimeout(() => document.getElementById('pinCajeroInput').focus(), 50);
-    } catch(e) {
-      console.error('Error buscando acceso:', e);
-      document.getElementById('loadingScreen').classList.add('hide');
-      document.getElementById('loginScreen').classList.add('active');
-    }
-  }
-
-  if (_codigoCajero) {
-    iniciarComoCajero(_codigoCajero);
-  } else {
   auth.onAuthStateChanged(async (user) => {
     // Solo ignorar si ya está la UI montada (evitar doble init)
     if (authInitialized && document.getElementById('appShell').classList.contains('active')) return;
@@ -716,7 +669,6 @@ window.addEventListener('DOMContentLoaded', () => {
       showLogin();
     }
   }, 8000);
-  } // fin flujo dueño
 });
 
 
@@ -733,7 +685,6 @@ async function initEmpleado(codeSuc) {
 }
 
 async function initDueno() {
-  uidDueno = currentUser.uid;
   try {
     const cfg = await db.collection('config').doc(currentUser.uid).get();
     if (cfg.exists) {
@@ -755,7 +706,6 @@ async function initDueno() {
     } catch(e) {}
   }
   hideLoading(); initUI();
-  actualizarLinkCajero();
 }
 
 function initUI() {
@@ -861,7 +811,7 @@ async function registrarVenta() {
     return;
   }
   try {
-    await db.collection('negocios').doc(uidDueno).collection('ventas').add(venta);
+    await db.collection('ventas').add(venta);
     if (patente && features.fidelizacion) await actualizarFidel(patente, precio);
     showToast('✅ Venta registrada');
     document.getElementById('vPatente').value = '';
@@ -875,7 +825,7 @@ async function cargarVentasHoy() {
   if (!currentSucId) return;
   const hoy = new Date().toISOString().split('T')[0];
   try {
-    const snap = await db.collection('negocios').doc(uidDueno).collection('ventas')
+    const snap = await db.collection('ventas')
       .where('sucursalId','==',currentSucId)
       .where('fechaStr','==',hoy)
       .orderBy('fecha','desc').get();
@@ -912,7 +862,7 @@ function actualizarStats() {
 
 async function eliminarVenta(id) {
   if (!confirm('¿Eliminar esta venta?')) return;
-  await db.collection('negocios').doc(uidDueno).collection('ventas').doc(id).delete();
+  await db.collection('ventas').doc(id).delete();
   showToast('Venta eliminada'); cargarVentasHoy();
 }
 
@@ -954,7 +904,7 @@ async function filtrarHistorial() {
   const hasta = document.getElementById('filtroHasta').value;
   if (!desde || !hasta) return;
   try {
-    const snap = await db.collection('negocios').doc(uidDueno).collection('ventas')
+    const snap = await db.collection('ventas')
       .where('sucursalId','==',currentSucId)
       .where('fechaStr','>=',desde)
       .where('fechaStr','<=',hasta)
@@ -1037,7 +987,7 @@ async function registrarGasto() {
   if (!monto || monto <= 0) { showToast('Ingresá un monto válido', 'danger'); return; }
   const concepto = document.getElementById('gConcepto').value.trim();
   if (!concepto) { showToast('Ingresá un concepto', 'danger'); return; }
-  await db.collection('negocios').doc(uidDueno).collection('gastos').add({
+  await db.collection('gastos').add({
     concepto, monto, metodo: document.getElementById('gMetodo').value,
     proveedor: document.getElementById('gProveedor').value.trim() || null,
     fecha: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1054,7 +1004,7 @@ async function registrarGasto() {
 async function cargarGastos() {
   if (!currentSucId) return;
   const hoy = new Date().toISOString().split('T')[0];
-  const snap = await db.collection('negocios').doc(uidDueno).collection('gastos')
+  const snap = await db.collection('gastos')
     .where('sucursalId','==',currentSucId)
     .where('fechaStr','==',hoy)
     .orderBy('fecha','desc').get();
@@ -1071,7 +1021,7 @@ async function cargarGastos() {
 
 async function eliminarGasto(id) {
   if (!confirm('¿Eliminar este gasto?')) return;
-  await db.collection('negocios').doc(uidDueno).collection('gastos').doc(id).delete();
+  await db.collection('gastos').doc(id).delete();
   showToast('Gasto eliminado'); cargarGastos();
 }
 
@@ -1391,7 +1341,7 @@ function sincronizarPendientes() {
       var data = {};
       for (var k in v) { if (k !== 'localId') data[k] = v[k]; }
       data.fecha = firebase.firestore.FieldValue.serverTimestamp();
-      db.collection('negocios').doc(uidDueno).collection('ventas').add(data)
+      db.collection('ventas').add(data)
         .then(function() { return idbDelete('ventas_pendientes', localId); })
         .then(siguiente)
         .catch(function(e) { console.error('sync error:', e); });
@@ -1443,10 +1393,10 @@ async function generarBackup(silencioso) {
   try {
     // Recopilar todos los datos
     var [ventasSnap, sucursalesSnap, fidelSnap, configSnap] = await Promise.all([
-      db.collection('negocios').doc(uidDueno).collection('ventas').where('uid', '==', uid).get().catch(function(){return {docs:[]};}),
+      db.collection('ventas').where('uid', '==', uid).get().catch(function(){return {docs:[]};}),
       db.collection('sucursales').where('uid', '==', uid).get().catch(function(){return {docs:[]};}),
       db.collection('fidelizacion').where('uid', '==', uid).get().catch(function(){return {docs:[]};}),
-      db.collection('negocios').doc(uidDueno).collection('configuracion').doc(uid).get().catch(function(){return {exists:false};})
+      db.collection('configuracion').doc(uid).get().catch(function(){return {exists:false};})
     ]);
 
     var backup = {
@@ -1511,7 +1461,7 @@ async function restaurarBackup(input) {
     // Restaurar ventas
     (backup.ventas || []).forEach(function(v) {
       var id = v._id; var data = Object.assign({}, v); delete data._id;
-      batch.set(db.collection('negocios').doc(uidDueno).collection('ventas').doc(id), data);
+      batch.set(db.collection('ventas').doc(id), data);
       if (++count % 400 === 0) { batch.commit(); batch = db.batch(); }
     });
 
@@ -1529,7 +1479,7 @@ async function restaurarBackup(input) {
 
     // Restaurar configuración
     if (backup.configuracion && Object.keys(backup.configuracion).length > 0) {
-      batch.set(db.collection('negocios').doc(uidDueno).collection('configuracion').doc(uid), backup.configuracion, { merge: true });
+      batch.set(db.collection('configuracion').doc(uid), backup.configuracion, { merge: true });
     }
 
     await batch.commit();
@@ -1552,52 +1502,6 @@ function chequearBackupDiario() {
     setTimeout(function() { generarBackup(true); }, 5000);
   }
 }
-
-
-  // ── Generar código de acceso cajero ──────────────────
-  async function generarCodigoAcceso() {
-    if (!uidDueno) return;
-    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
-    const pin    = pinCajeroActual || '2468';
-    try {
-      await db.collection('accesos').doc(codigo).set({
-        uidDueno, pin, app: 'lavar',
-        creadoEn: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      const base = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
-      const link = base + '?cajero=' + codigo;
-      const el = document.getElementById('linkCajeroDisplay');
-      if (el) el.textContent = link;
-      const btn = document.getElementById('compartirLinkCajeroBtn');
-      if (btn) btn.onclick = () => {
-        const nombre = document.getElementById('cfgNombre')?.value || 'LAVAR';
-        const msg = nombre + '\nLink para el cajero:\n' + link + '\nPIN: ' + pin;
-        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
-      };
-    } catch(e) { if(typeof logError !== 'undefined') logError('generarCodigoAcceso', e.message); }
-  }
-  function actualizarLinkCajero() { generarCodigoAcceso(); }
-
-
-  // PIN Cajero confirm (arquitectura cajero)
-  document.getElementById('pinCajeroConfirmBtn').addEventListener('click', async () => {
-    if (document.getElementById('pinCajeroInput').value === pinCajeroActual) {
-      document.getElementById('modalPinCajero').style.display = 'none';
-      rolActual = 'cajero';
-      document.getElementById('loginScreen').classList.remove('active');
-      document.getElementById('app').classList.add('active');
-      cargarConfiguracion();
-      cargarVentas();
-      aplicarRestriccionesPorRol();
-      actualizarEstadoConexion(navigator.onLine);
-    } else {
-      document.getElementById('pinCajeroError').textContent = 'PIN incorrecto';
-      document.getElementById('pinCajeroInput').value = '';
-    }
-  });
-  document.getElementById('pinCajeroInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('pinCajeroConfirmBtn').click();
-  });
 
 </script>
 </body>

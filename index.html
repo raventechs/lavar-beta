@@ -674,7 +674,6 @@ window.addEventListener('DOMContentLoaded', () => {
       const acceso = snap.data();
       uidDueno = acceso.uidDueno;
       pinCajeroActual = acceso.pin || '2468';
-      actualizarLinkCajero();
       document.getElementById('loadingScreen').classList.add('hide');
       document.getElementById('pinCajeroInput').value = '';
       document.getElementById('pinCajeroError').textContent = '';

@@ -727,6 +727,8 @@ async function initEmpleado(codeSuc) {
 }
 
 async function initDueno() {
+  uidDueno = currentUser.uid;
+  setTimeout(actualizarLinkCajero, 1000);
   try {
     const cfg = await db.collection('config').doc(currentUser.uid).get();
     if (cfg.exists) {

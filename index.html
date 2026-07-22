@@ -465,6 +465,16 @@ input, select, textarea { border-radius: 10px !important; }
 </div>
 
 <!-- MODAL SUCURSAL -->
+<!-- Modal PIN Cajero -->
+<div class="modal-overlay" id="modalPinCajero" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--surface,#1e293b);border-radius:16px;padding:28px 24px;width:90%;max-width:300px;text-align:center">
+    <div style="font-size:1rem;font-weight:700;margin-bottom:16px">🔐 PIN Punto de Venta</div>
+    <input type="password" id="pinCajeroInput" maxlength="6" inputmode="numeric" placeholder="••••" style="width:100%;padding:12px;border-radius:10px;border:1px solid #374151;background:#111827;color:#f1f5f9;font-size:1.1rem;text-align:center;margin-bottom:8px">
+    <div id="pinCajeroError" style="color:#ef4444;font-size:0.75rem;min-height:18px;margin-bottom:8px"></div>
+    <button id="pinCajeroConfirmBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">Entrar</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalSucursal">
   <div class="modal">
     <h3>🏪 Nueva sucursal</h3>
@@ -661,7 +671,7 @@ window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('loadingScreen').classList.add('hide');
       document.getElementById('pinCajeroInput').value = '';
       document.getElementById('pinCajeroError').textContent = '';
-      document.getElementById('modalPinCajero').classList.add('active');
+      document.getElementById('modalPinCajero').style.display = 'flex';
       setTimeout(() => document.getElementById('pinCajeroInput').focus(), 50);
     } catch(e) {
       console.error('Error buscando acceso:', e);
@@ -1559,6 +1569,27 @@ function chequearBackupDiario() {
     } catch(e) { if(typeof logError !== 'undefined') logError('generarCodigoAcceso', e.message); }
   }
   function actualizarLinkCajero() { generarCodigoAcceso(); }
+
+
+  // PIN Cajero confirm (arquitectura cajero)
+  document.getElementById('pinCajeroConfirmBtn').addEventListener('click', async () => {
+    if (document.getElementById('pinCajeroInput').value === pinCajeroActual) {
+      document.getElementById('modalPinCajero').style.display = 'none';
+      rolActual = 'cajero';
+      document.getElementById('loginScreen').classList.remove('active');
+      document.getElementById('app').classList.add('active');
+      cargarConfiguracion();
+      cargarVentas();
+      aplicarRestriccionesPorRol();
+      actualizarEstadoConexion(navigator.onLine);
+    } else {
+      document.getElementById('pinCajeroError').textContent = 'PIN incorrecto';
+      document.getElementById('pinCajeroInput').value = '';
+    }
+  });
+  document.getElementById('pinCajeroInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('pinCajeroConfirmBtn').click();
+  });
 
 </script>
 </body>

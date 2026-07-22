@@ -455,6 +455,12 @@ input, select, textarea { border-radius: 10px !important; }
       </div>
 
       <div class="card">
+        <div class="card-title">📲 Acceso Punto de Venta</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px;">Compartí este link con tu cajero o empleado.</p>
+        <div id="linkCajeroDisplay" style="font-size:11px;color:var(--naranja,#f59e0b);word-break:break-all;padding:8px;background:rgba(0,0,0,.2);border-radius:8px;margin-bottom:8px">—</div>
+        <button class="btn btn-primary btn-sm" id="compartirLinkCajeroBtn" style="width:100%">📤 Compartir por WhatsApp</button>
+      </div>
+      <div class="card">
         <div class="card-title">👤 Mi cuenta</div>
         <p style="font-size:13px;color:var(--text2);margin-bottom:12px;" id="cfgEmail">—</p>
         <button class="btn btn-danger btn-sm" onclick="doLogout()">Cerrar sesión</button>
